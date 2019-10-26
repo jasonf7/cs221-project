@@ -1,114 +1,115 @@
-\documentclass[12pt]{article}
+\documentclass{article}
 
-\usepackage{amsmath, amssymb}
-\usepackage{float}
-\usepackage{color}
-\usepackage{enumitem}
-\usepackage[T1]{fontenc}
-\usepackage[margin=1in]{geometry}
+
+\usepackage{arxiv}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}
 \usepackage{graphicx}
-\usepackage{parskip}
-\usepackage{soul}
-\usepackage{pgfplots}
-\usepackage{cite}
+\usepackage{float}
+\graphicspath{ {./img/} }
 
-\usepackage{hyperref}
-\hypersetup{
-    colorlinks=true,
-    citecolor=black,
-    linkcolor=blue,
-    filecolor=magenta,      
-    urlcolor=cyan,
-}
+\title{Unsupervised MRI brain image segmentation}
 
-\graphicspath{
-    {img/}
+\author{
+  Sarah Xu \\
+  \texttt{sarahxu@stanford.edu} \\
+  %% examples of more authors
+   \And
+ Yuxin Hu \\
+  \texttt{yuxinh@stanford.edu} \\
+  \And
+ Zhaotian Fang \\
+  \texttt{z23fang@stanford.edu} \\
+  %% \AND
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
 }
 
 \begin{document}
-    
-\begin{titlepage}
-    \centering
-    \vspace*{2.5cm}
-    
-    \Huge
-    \textbf{Project Proposal} \\
-    
-    \huge
-    \textbf{Segmentation in Medical Imaging}
-    
-    \vfill
-    
-    \LARGE
-    Zhaotian Fang (z23fang) \\
-    Zhaotian Fang (z23fang) \\
-    Zhaotian Fang (z23fang) \\
-    \today \\
-    CS221 \\
-    Autumn 2019 \\
-    Stanford University
-\end{titlepage}
+\maketitle
+% keywords can be removed
+\keywords{tumor segmentation \and neuroanatomy segmentation \and super-resolution \and medical imaging \and unsupervised learning }
 
 \section{Introduction}
-In recent years, there has been renewed interest in accurate segmentation of magnetic resonance (MR) images, especially for the human brain. In this task, there are two focus areas: neuroanatomy segmentation on the whole brain as well as anomaly detection and segmentation on the lesion or tumor areas. The neuroanatomy segmentation forms the foundation for volume and shapes analyses to track the progression of diseases over time. Moreover, it provides labelling of brain structures such as the white matter, cortex, hippocampus, etc. to help neuroscience studies. The brain MR images are often used for pathological diagnosis. The accurate detection and segmentation of brain lesions or tumors are even more critical.
+In recent years, there has been renewed interest in accurate segmentation of magnetic resonance (MR) images, especially for the human brain. In this task, there are two focus areas: neuroanatomy segmentation on the whole brain as well as anomaly detection and segmentation on the lesion or tumor areas. 
 
-\section{Related Work}
-Since manual segmentation of brain neuroanatomy and lesions is time-consuming, there has been a plethora of efforts in automating and accelerating the process. In terms of unsupervised approaches for brain neuroanatomy segmentation, the most commonly used is a software tool named FreeSurfer \cite{freesurfer}. There has been an abundance of follow-up research on multi-atlas registration and label fusion (MALF) (citation here). However, these techniques are computationally intensive, taking several hours to produce a single segmentation result. As for brain lesion segmentation, a MATLAB toolbox named Lesion Segmentation Tool (LST) is usually used to identify lesion areas. As a post-processing step, the resulting lesion segmentations are then manually adjusted by radiologists for better precision.
+Since manual segmentation of brain neuroanatomy and lesions is time-consuming, there has been a plethora of efforts in automating and accelerating the process. For brain neuroanatomy segmentation, the most commonly used is a software tool named FreeSurfer.~\cite{freesurfer} However, this tool is computationally intensive, taking several hours for one person. As for brain lesion segmentation, radiologists use a MATLAB toolbox named Lesion Segmentation Tool (LST) to gather initial results, and then manually adjust the detected regions.~\cite{schmidt2013lst}
 
-In attempts to improve on the efficiency of brain anatomy segmentation and lesion segmentation, supervised Convolutional Neural Network (CNN) based approaches have been emerging over the past few years. However, these methods are faces two main constraints on performance. First, these supervised models require an extensive amount of high-quality segmentation labels. These labels are usually created manually and thus hard to obtain. Secondly, these models primarily operate on similar applications base on the dataset they were trained on. Due to the high cost associated with label acquisition in addition to hardware limitations, high quality MRI datasets appropriate for training neural networks are limited. As a result, supervised approaches like CNNs struggle with generalization. Therefore, there is a need to find a generalizable model to efficiently segment the brain MR images in an unsupervised manner.
+In attempt to improve on the efficiency and accuracy of the segmentation, supervised deep learning methods have been emerging over the past few years.~\cite{badrinarayanan2017segnet, su2015autoencoder, li2018hdensenet, wachinger2018deepnat} However, there are two main shortcomings to these methods. First, these supervised methods require an extensive amount of high-quality segmentation labels, which made by radiologists and thus hard to obtain. Secondly, supervised approaches struggle with generalization across different datasets. In the context of brain MRIs, the image distribution varies drastically based on the process used to obtain them (e.g. the machine). Therefore, a model trained on one dataset may not perform as well on other datasets. Therefore, there is a need to find a dataset-agnostic model to effectively segment the brain MR images in an unsupervised manner.
 
-In the medical field, there have been a few attempts to use deep learning with the object to achieve unsupervised segmentation. Stacked denoising autoencoders were used as a pre-training step before supervised learning. (Citations) Generative models such as the AnoGAN framework and Variational Autoencoders were deployed to learn healthy brain images, assuming that when fed with brain images with anomalies, the network will be able to classify the image as abnormal. An effort was made to combine the above-mentioned frameworks into what is called AnoVAEGAN to segment brain lesions in an unsupervised way. However, these approaches are still rely on large sets of high-quality and healthy brain images to learn effectively.
+There have been a few efforts in applying unsupervised and semi-supervised methods for brain MRI segmentation. Stacked denoising autoencoders were used as a pre-training step before supervised learning.~\cite{su2015autoencoder} Generative models such as the AnoGAN framework and Variational Autoencoders were trained purely on healthy brain images, assuming that the network would be able to detect the abnormal regions.~\cite{an2015vae, Januszewsk2019cyclegan} However, those methods still need large sets of healthy images, and can only be used for rough tumor segmentation, since some high-resolution details are missed. In this work, we want to simultaneously segment brain anatomy and lesions without the need of labelling.
+
+Another branch of methods used in improving segmentation is through super-resolution. Since high-resolution brain MR images are scarce, efforts have been made to build a model that upsamples low-resolution images so it can then be segmented to produce a finer result. We also want to explore the idea of learning these tasks jointly using deep learning. Research into this joint task is limited. Pham et. al showed that their model SegSRGAN, a WGAN that learns both tasks jointly, was able to outperform state-of-the-art models trained on individual tasks.~\cite{pham:hal-01895163} Sun et. al proposed a supervised U-Net based model that learns both image reconstruction and segmentation of brain CS-MRIs.~\cite{sun2018joint}
+
+%An effort was made to combine the above-mentioned frameworks into what is called AnoVAEGAN to segment brain lesions in an unsupervised way. However, these approaches are still rely on large sets of high-quality and healthy brain images to learn effectively.
 
 \section{Method}
 % Define the input-output behavior of the system and the scope of the project.
+Mutual information measures the mutual dependence between the two variables, and it has been used for image registration, feature selection, etc. Recently, a method called invariant information clustering (IIC) was proposed and achieved state-of-the-art results for unsupervised image classification and segmentation.~\cite{ji2018invariant} This method maximizes the mutual information between the class assignments of each pair and can directly output labelling on each pixel. In this project, we plan to use a similar idea to segment both neuroanatomy and lesion in an unsupervised manner. The inputs to our system are unlabeled brain MR images. The output to our system consists of segmentation masks with labels for different anatomical components and lesions.
 
-Lately, in the computer vision field, a novel method was proposed by Ji Xu et al. to use invariant information clustering (IIC) for unsupervised image classification and segmentation.  This method uses a clustering technique where it maximizes the mutual information between the class assignments of each pair and can directly output labelings on each pixel. In this project, we propose a technique similar to IIC to provide both neuroanatomy segmentations and lesion segmentations on brain MR images in an unsupervised manner.
-
-The input to our system is a slice of a brain MRI. The output to our system consists of two segmentation masks: one neuroanatomy semantic mask decomposing the brain image into its anatomical components, and another lesion binary mask indicating the presence of brain tumors.
-
-\section{Challenges}
+\subsection{Challenges}
 % What are the challenges? Which topics (e.g., search, MDPs, etc.) might be able to address those challenges (at a high-level, since we haven't covered any techniques in detail at this point)?
 % challenges be what is difficult about solving this problem without the use of AI, or should it be more about what problems might arise when trying to implement our methods?
-In general the task of image segmentation is very hard. Traditional image segmentation comprise of various edge-based and region-based methods \cite{segmentation_survey}. However, these methods are not robust and do not generalize well across different datasets. In terms of the topics covered in class, deep learning based methods like CNNs will be useful since they have been proven in research to work well across many different domains.
+Accurate image segmentation itself is very challenging, even with labels. This is especially the case for medical images, considering the variance in images produced by different patients, hardware, and radiologists. Traditional image segmentation comprise of various edge-based and region-based methods.\cite{segmentation_survey} However, these methods are not robust and do not generalize well across different datasets. Supervised learning methods using deep neural networks have shown to achieve state-of-the-art results given a sufficient amount of training examples. 
 
-During the implementation of our system, one challenge we face is dealing with the uncertainty around whether we propose will be able learn from brain MRIs. Although IIC has shown to work with image distributions occuring in nature, it's unclear how well the method will transfer to MR images. 
+During the implementation of our system, we may observe that IIC will not be able to learn the best segmentation from brain MRIs. Although IIC has been shown to work with image distributions occurring in nature, it is unclear how well the method will transfer to MR images. Another challenge we face is proper evaluation of segmentation results. More specifically, there is no standard metric for brain anatomy segmentation. In addition, it is hard to tell the extent of tumors in MR images, even for trained professionals like radiologists.
 
-\section{Dataset}
+\subsection{Dataset}
 % Collect some preliminary data, and give concrete examples of inputs and outputs.
-Out data will mainly come from three sources:
-Human connectome project
-MS lesion segmentation challenge 2008
-data from MGH
+Our data will mainly come from two sources. The first source is the Human Connectome Project (HCP), which provides MR images of $1206$ healthy young adults subjects collected in 2012 to 2015, where 3T structural scans are available for 1113 subjects.~\cite{van2012human} Additional brain lesion data are available from the 2008 Medical Image Computing and Computer Assisted Intervention (MICCAI) multiple sclerosis (MS) Lesion Segmentation Challenge where 54 brain MR images and represents a range of patients and pathology which was acquired from Children's Hospital Boston and University of North Carolina.~\cite{miccai2008}
 
-\begin{figure}[htbp!]
-\includegraphics[width=\textwidth]{ana_seg1.png}
-\end{figure}
+We may also be able to test our trained network on some clinical data from our collaborators at Massachusetts General Hospital (MGH) and Stanford hospital.
 
-\begin{figure}[htbp!]
-\includegraphics[width=\textwidth]{ana_seg2.png}
-\end{figure}
+\subsection{Baseline and Oracle}
+\paragraph{Baseline}
+For the baseline of the project, the anatomy segmentation is obtained using a unsupervised segmentation method called mean-shift clustering. This method perform iterative mean-shift algorithm at each pixel until they converge to a set of clusters. ~\cite{comaniciu1999mean} For the example shown in Fig. 1b, the brain image is segmented into 17 clusters.
 
-\begin{figure}[htbp!]
-\includegraphics[width=\textwidth]{tumor_seg.png}
-\end{figure}
+For the tumor segmentation, we use LST with lesion prediction algorithm (LPA) on Fluid-attenuated inversion recovery (FLAIR) MR images to obtain a baseline for the lesion segmentation (Fig. 2b).~\cite{ediss20373}
 
-\section{Baseline \& Oracle}
-% Implement a baseline and an oracle and discuss the gap
-The baseline for our system is a combination of anatomy segmentation results from FreeSurfer and the lesion segmentation results from LST. The Oracle of the system is naturally the segmentation labels provided by the radiologists. The gap between them are… 
+\paragraph{Oracle}
+As shown in Fig. 1c, We will be using the FreeSurfer segmentation results as the oracle for neuroanatomy segmentation on MR images, which classify the brain regions into labels ranging from $0$ to $14175$.~\cite{freesurfercolorlut}  Radiologist's manual labelling of brain lesion is used as the oracle for lesion segmentation.
 
-Baseline 
-Whole brain segmentation:  FreeSurfer (TOO HARD????)
-Lesion Segmentation: https://www.applied-statistics.de/lst.html
-
-Oracle:
-Whole brain segmentation:  Radiologist???
-Lesion Segmentation: Radiologist
-
-\section{Evaluation}
+\subsection{Evaluation}
 % What is your evaluation metric for success?
-In order to evaluate the quality of the segmentation we can use a variety of different metrics including the Dice Coefficient, and mean IOU. For some complicated structures, we may need to have some radiologists to evaluate the results of different methods (objective scoring). 
+To evaluate the quality of the segmentation results, we can employ three metrics commonly used for this task. Long et. al introduced pixel accuracy and mean intersection over union (mIOU) as metrics in evaluating their FCN for semantic segmentation. Another common segmentation metric used in the medical imaging field is the DICE coefficient.~\cite{dice1945measures} Brebisson et. al used the mean DICE coefficient over classes to evaluate their novel CNN for anatomical brain segmentation.
 
-\bibliographystyle{IEEEtran}
-\bibliography{proposal}
+Observer study is another way to get signal on the performance of the model. More specifically, we will hand pairs of ground truth and predicted segmentation results to radiologists for them to score the quality.
+
+\newpage
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{img/Picture1.png}
+\caption{Example anatomy segmentation of brain MRI with mean shift (baseline) and FreeSurfer (orcale).}
+\label{fig1:anatomy}
+\end{figure}
+
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{img/Picture2.png}
+\caption{Example tumor segmentation of brain MRI with LST package (baseline) and radiologist's manual drawing (orcale).}
+\label{fig2:tumor}
+\end{figure}
+
+
+\bibliographystyle{unsrt}  
+\bibliography{proposal}  %%% Remove comment to use the external .bib file (using bibtex)
 
 \end{document}
